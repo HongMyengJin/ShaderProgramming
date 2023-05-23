@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Renderer.h"
-
+#include "LoadPng.h"
+#include "assert.h"
 Renderer::Renderer(int windowSizeX, int windowSizeY)
 {
 	Initialize(windowSizeX, windowSizeY);
@@ -36,6 +37,8 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 
 	//Create Textures
 	CreateTextures();
+
+	m_RGBTexture = CreatePngTexture("./rgb.png", GL_NEAREST);
 
 	if (m_SolidRectShader > 0 && m_VBORect > 0)
 	{
@@ -525,7 +528,7 @@ void Renderer::DrawTextureSandbox()
 	GLuint samplerULoc = glGetUniformLocation(shader, "u_TexSampler");
 	glUniform1i(samplerULoc, 0); // 0번째 슬롯을 넘김
 	glActiveTexture(GL_TEXTURE0); // 0번 활성화(마지막으로 활성화된 것을 바인드 한다.)
-	glBindTexture(GL_TEXTURE_2D, m_CheckerBoardTexture);
+	glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
@@ -563,6 +566,29 @@ void Renderer::CreateTextures()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //GL_NEAREST
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
+GLuint Renderer::CreatePngTexture(char* filePath, GLuint samplingMethod)
+{
+	//Load Png
+	std::vector<unsigned char> image;
+	unsigned width, height;
+	unsigned error = lodepng::decode(image, width, height, filePath);
+	if (error != 0)
+	{
+		std::cout << "PNG image loading failed: " << filePath << std::endl;
+		assert(0);
+	}
+
+	GLuint temp;
+	glGenTextures(1, &temp);
+	glBindTexture(GL_TEXTURE_2D, temp); 
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, samplingMethod); 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, samplingMethod); 
+
+	return temp;
+
 }
 
 void Renderer::CreateParticles(int numParticles)

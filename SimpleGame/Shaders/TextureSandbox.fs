@@ -7,5 +7,8 @@ in vec2 v_TexPos; // uv ÁÂÇ¥
 
 void main()
 {
-	FragColor = texture(u_TexSampler, v_TexPos);
+	float x = v_TexPos.x;
+	float y = 1.0 - abs(v_TexPos.y * 2.f - 1.0);
+	vec2 newTexPos = vec2(x, y);
+	FragColor = texture(u_TexSampler, newTexPos);
 }
