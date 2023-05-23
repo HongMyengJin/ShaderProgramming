@@ -30,6 +30,7 @@ private:
 	void CreateVertexBufferObjects();
 	void GetGLPosition(float x, float y, float *newX, float *newY);
 	void Class0310();
+	void CreateTextures();
 
 	//particle VBO
 	void CreateParticles(int numParticles);
@@ -70,5 +71,6 @@ private:
 	GLuint m_TextureSandboxShader = 0;
 	GLuint m_TextureSandbox = 0;
 	GLuint m_TextureSandboxVBO = 0;
+	GLuint m_CheckerBoardTexture = 0;
 };
 

@@ -2,8 +2,10 @@
 
 layout(location=0) out vec4 FragColor;
 
-in vec2 v_TexPos;
+uniform sampler2D u_TexSampler;
+in vec2 v_TexPos; // uv ÁÂÇ¥
+
 void main()
 {
-	FragColor = vec4(v_TexPos, 0, 1);
+	FragColor = texture(u_TexSampler, v_TexPos);
 }
