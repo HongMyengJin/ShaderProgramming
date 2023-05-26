@@ -90,11 +90,35 @@ void flag()
 	FragColor = vec4(finalColor);
 }
 
+void realFlag()
+{
+	float period = (v_Texcoord.x + 1.0) * 1.0;
+	float xValue = v_Texcoord.x * 2.0 * c_PI * period;
+	float yValue = ((1.0 - v_Texcoord.y) - 0.5) * 2.0;
+	float sinValue = 0.25 * sin(xValue -100.0 * u_Time);
+	if(sinValue * v_Texcoord.x + 0.75  > yValue //* (1 - v_Texcoord.x)
+	&& 
+	sinValue * v_Texcoord.x - 0.75  < yValue) //* (1 - v_Texcoord.x)
+	{
+		FragColor = vec4(1);
+		float yWidth = 1.5;
+		float ydistance = yValue - (sinValue * v_Texcoord.x - 0.75);
+		float vX = v_Texcoord.x;
+		float vY = 1.0 - ydistance / yWidth;
+		FragColor = vec4(vX, vY, 0, 1);
+	}
+	else
+	{
+		FragColor = vec4(0);
+	}
+}
+
 void main()
 {
 	//test();
 	//circle();
 	//circles();
 	//radar();
-	flag();
+	//flag();
+	realFlag();
 }

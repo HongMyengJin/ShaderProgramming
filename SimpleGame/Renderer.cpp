@@ -425,6 +425,12 @@ void Renderer::DrawParticleEffect()
 	glUniform1f(uniformLoc_Time, g_time);
 	g_time += 0.008;
 
+
+	//int texULoc = glGetUniformLocation(program, "u_Texture");
+	//glUniform1f(texULoc, 0);
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, m_particleTexture);
+
 	glDrawArrays(GL_TRIANGLES, 0, m_ParticleVerticesCount);
 
 	glDisable(GL_BLEND);
