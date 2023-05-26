@@ -38,6 +38,8 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	//Create Textures
 	CreateTextures();
 
+	//Create FBOs
+	CreateFBOs();
 	m_RGBTexture = CreatePngTexture("./rgb.png", GL_NEAREST);
 
 	if (m_SolidRectShader > 0 && m_VBORect > 0)
@@ -475,6 +477,7 @@ void Renderer::DrawAlphaClear()
 
 void Renderer::DrawFragmentSandbox()
 {
+	
 	GLuint shader = m_FragmentSandboxShader;
 	glUseProgram(shader);
 	glEnable(GL_BLEND);
@@ -513,6 +516,8 @@ void Renderer::DrawFragmentSandbox()
 
 void Renderer::DrawTextureSandbox()
 {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, 256, 512);
 	GLuint shader = m_TextureSandboxShader;
 	glUseProgram(shader);
 	glEnable(GL_BLEND);
@@ -589,6 +594,58 @@ GLuint Renderer::CreatePngTexture(char* filePath, GLuint samplingMethod)
 
 	return temp;
 
+}
+
+void Renderer::CreateFBOs() // 텍스쳐 3장 만듬
+{
+	GLuint m_AFBOTexture = 0;
+	GLuint m_BFBOTexture = 0;
+	GLuint m_CFBOTexture = 0;
+
+	glGenTextures(1, &m_AFBOTexture);
+	glBindTexture(GL_TEXTURE_2D, m_AFBOTexture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+	glGenTextures(1, &m_BFBOTexture);
+	glBindTexture(GL_TEXTURE_2D, m_BFBOTexture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+	glGenTextures(1, &m_CFBOTexture);
+	glBindTexture(GL_TEXTURE_2D, m_BFBOTexture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+	glGenRenderbuffers(1, &m_DepthRenderBuffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, m_DepthRenderBuffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 512, 512);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	//해상도를 계속 512로 맞춰줌
+
+	glGenFramebuffers(1, &m_A_FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO); // A_FBO 사용
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_AFBOTexture, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_DepthRenderBuffer);
+
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE)
+	{
+		std::cout << "fbo creation failed" << std::endl;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0); // 기존 0번 사용
 }
 
 void Renderer::CreateParticles(int numParticles)

@@ -32,6 +32,7 @@ private:
 	void Class0310();
 	void CreateTextures();
 	GLuint CreatePngTexture(char* filePath, GLuint samplingMethod);
+	void CreateFBOs();
 
 	//particle VBO
 	void CreateParticles(int numParticles);
@@ -74,5 +75,13 @@ private:
 	GLuint m_TextureSandboxVBO = 0;
 	GLuint m_CheckerBoardTexture = 0;
 	GLuint m_RGBTexture = 0;
+
+	//FBO
+	GLuint m_AFBOTexture = 0;
+	GLuint m_BFBOTexture = 0;
+	GLuint m_CFBOTexture = 0;
+	GLuint m_DepthRenderBuffer = 0;
+
+	GLuint m_A_FBO = 0;
 };
 
