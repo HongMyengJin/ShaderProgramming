@@ -42,6 +42,7 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	CreateFBOs();
 	m_RGBTexture = CreatePngTexture("./rgb.png", GL_NEAREST);
 
+	m_ParticleTexture = CreatePngTexture("./particle.png", GL_NEAREST);
 	if (m_SolidRectShader > 0 && m_VBORect > 0)
 	{
 		m_Initialized = true;
@@ -516,6 +517,11 @@ void Renderer::DrawFragmentSandbox()
 	glUniform1f(uniformLoc_Time, g_time);
 	g_time += 0.001;
 
+	int uniformLoc_Texture = -1;
+	uniformLoc_Texture = glGetUniformLocation(shader, "u_Texture");
+	glUniform1i(uniformLoc_Time, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 

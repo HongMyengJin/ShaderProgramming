@@ -9,6 +9,8 @@ uniform vec2 u_Points[3];
 uniform float u_Time;
 const float c_PI = 3.141592;
 
+uniform sampler2D u_Texture;
+
 void test()
 {
 	float newValueX = v_Texcoord.x * 10.0 * c_PI;
@@ -105,7 +107,8 @@ void realFlag()
 		float ydistance = yValue - (sinValue * v_Texcoord.x - 0.75);
 		float vX = v_Texcoord.x;
 		float vY = 1.0 - ydistance / yWidth;
-		FragColor = vec4(vX, vY, 0, 1);
+		FragColor = texture(u_Texture, vec2(vX, vY));
+		//FragColor = vec4(vX, vY, 0, 1);
 	}
 	else
 	{

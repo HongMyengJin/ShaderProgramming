@@ -83,5 +83,7 @@ private:
 	GLuint m_DepthRenderBuffer = 0;
 
 	GLuint m_A_FBO = 0;
+
+	GLuint m_ParticleTexture = 0;
 };
 
