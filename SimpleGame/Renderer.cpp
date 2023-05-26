@@ -570,7 +570,7 @@ void Renderer::DrawGridMesh()
 	int uniformLoc_Time = -1;
 	uniformLoc_Time = glGetUniformLocation(shader, "u_Time");
 	glUniform1f(uniformLoc_Time, g_time);
-	g_time += 0.001;
+	g_time += 0.08f;
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_GridMeshVBO);
 	glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);

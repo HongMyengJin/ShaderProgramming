@@ -14,9 +14,14 @@ void Test()
 	float x = a_Position.x;
 	float temp = a_Position.x + 0.5;
 	float value = (a_Position.x + 0.5) * 2.0 * PI;
-	float y = a_Position.y + temp * 0.5 * sin((value + u_Time)); // 컬러 음영 조절: sin((value + u_Time))
-	vec4 new_Position = vec4(x, y, 0.0, 1.0);
-	gl_Position = new_Position;
+	float y = a_Position.y + temp * 0.5 * sin((value - u_Time)); // 컬러 음영 조절: sin((value + u_Time))
+	vec3 new_Position = vec3(x, y, 0.0);
+
+	vec3 tarPosition = vec3(1.0, 1.0, 0.0);
+	vec3 morphPosition = mix(new_Position, tarPosition, fract(u_Time / 10)); // 0.5면 화면 중간
+	gl_Position = vec4(morphPosition, 1.0);
+	//gl_Position = new_Position;
+
 	float tx = a_Position.x + 0.5;
 	float ty = a_Position.y * (-1) + 0.5f;
 	v_TexPos = vec2(tx, ty);
