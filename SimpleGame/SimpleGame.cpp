@@ -32,7 +32,8 @@ void RenderScene(void)
 	//g_Renderer->DrawParticleEffect();
 	//g_Renderer->DrawFragmentSandbox();
 	//g_Renderer->DrawVertexSandbox();
-	g_Renderer->DrawFragmentSandbox();
+	//g_Renderer->DrawFragmentSandbox();
+	g_Renderer->DrawGridMesh();
 	glutSwapBuffers();
 }
 
