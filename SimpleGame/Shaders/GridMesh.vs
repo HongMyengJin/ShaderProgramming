@@ -18,7 +18,8 @@ void Test()
 	vec3 new_Position = vec3(x, y, 0.0);
 
 	vec3 tarPosition = vec3(1.0, 1.0, 0.0);
-	vec3 morphPosition = mix(new_Position, tarPosition, fract(u_Time / 10)); // 0.5면 화면 중간
+	float newTime = fract(u_Time) - a_Position.y;
+	vec3 morphPosition = mix(new_Position, tarPosition, newTime); // 0.5면 화면 중간
 	gl_Position = vec4(morphPosition, 1.0);
 	//gl_Position = new_Position;
 
