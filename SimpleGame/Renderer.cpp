@@ -34,6 +34,7 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 		"./Shaders/TextureSandbox.fs");
 	m_GridMeshShader = CompileShaders("./Shaders/GridMesh.vs",
 		"./Shaders/GridMesh.fs");
+	m_DrawTextureShader = CompileShaders("./Shaders/DrawTexture.vs", "./Shaders/DrawTexture.fs");
 	//Create VBOs
 	CreateVertexBufferObjects();
 
@@ -170,7 +171,26 @@ void Renderer::CreateVertexBufferObjects()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*floatCount,
 		lineVertices, GL_STATIC_DRAW);
 
+	float sizeX = 1.f / m_WindowSizeX;
+	float sizeY = 1.f / m_WindowSizeY;
+
+	float drawTextureRect[] =
+	{
+		-sizeX, sizeY, 0.f,		0.f, 0.f, // x, y, z, tx, ty
+		-sizeX, -sizeY, 0.f,	0.f, 1.f,
+		sizeX, sizeY, 0.f,		1.f, 0.f, // Triangle1
+		sizeX, sizeY, 0.f,		1.f, 0.f,
+		-sizeX, -sizeY, 0.f,	0.f, 1.f,
+		sizeX, -sizeY, 0.f,		1.f, 1.f // Triangle2
+	};
+
+	glGenBuffers(1, &m_DrawTextureVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_DrawTextureVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(drawTextureRect), drawTextureRect, GL_STATIC_DRAW);
+
 	CreateParticles(100000);
+
+
 }
 
 void Renderer::AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)
@@ -491,7 +511,11 @@ void Renderer::DrawAlphaClear()
 
 void Renderer::DrawFragmentSandbox()
 {
-	
+	glBindFramebuffer(GL_FRAMEBUFFER, 0); // m_A_FBO에 attach 되어있는 놈에게 렌더링이 되고 있기 때문
+	glViewport(0, 0, 512, 512);
+	GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4};
+	glDrawBuffers(5, drawBuffers);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	GLuint shader = m_FragmentSandboxShader;
 	glUseProgram(shader);
 	glEnable(GL_BLEND);
@@ -507,17 +531,17 @@ void Renderer::DrawFragmentSandbox()
 		sizeof(float) * 5, 0);
 	glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE,
 		sizeof(float) * 5, (GLvoid*)(sizeof(float)*3));
-	
-	int uniformLoc_Point = -1;
-	uniformLoc_Point = glGetUniformLocation(shader, "u_Point");
-	glUniform2f(uniformLoc_Point, 0.5f, 0.f);
+	//
+	//int uniformLoc_Point = -1;
+	//uniformLoc_Point = glGetUniformLocation(shader, "u_Point");
+	//glUniform2f(uniformLoc_Point, 0.5f, 0.f);
 
-	float points[] = { 0.4f, 0.4f,
-					  0.2f, 0.2f,
-					  0.f, 0.3f };
-	int uniformLoc_Points = -1;
-	uniformLoc_Points = glGetUniformLocation(shader, "u_Points");
-	glUniform2fv(uniformLoc_Points, 3, points);
+	//float points[] = { 0.4f, 0.4f,
+	//				  0.2f, 0.2f,
+	//				  0.f, 0.3f };
+	//int uniformLoc_Points = -1;
+	//uniformLoc_Points = glGetUniformLocation(shader, "u_Points");
+	//glUniform2fv(uniformLoc_Points, 3, points);
 
 	int uniformLoc_Time = -1;
 	uniformLoc_Time = glGetUniformLocation(shader, "u_Time");
@@ -526,16 +550,25 @@ void Renderer::DrawFragmentSandbox()
 
 	int uniformLoc_Texture = -1;
 	uniformLoc_Texture = glGetUniformLocation(shader, "u_Texture");
-	glUniform1i(uniformLoc_Time, 0);
+	glUniform1i(uniformLoc_Texture, 0);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
+
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	DrawTexture(-0.5, 0.5, 256, 256, m_AFBOAttach1Texture);
+	DrawTexture(0.5, -0.5, 256, 256, m_AFBOAttach2Texture);
+	DrawTexture(-0.5, -0.5, 256, 256, m_AFBOAttach3Texture);
+	DrawTexture(0.5, -0.5, 256, 256, m_AFBOAttach4Texture);
 }
 
 
 void Renderer::DrawTextureSandbox()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO);
+
 	glViewport(0, 0, 256, 512);
 	GLuint shader = m_TextureSandboxShader;
 	glUseProgram(shader);
@@ -644,14 +677,43 @@ GLuint Renderer::CreatePngTexture(char* filePath, GLuint samplingMethod)
 
 void Renderer::CreateFBOs() // 텍스쳐 3장 만듬
 {
-	GLuint m_AFBOTexture = 0;
-	GLuint m_BFBOTexture = 0;
-	GLuint m_CFBOTexture = 0;
-
 	glGenTextures(1, &m_AFBOTexture);
 	glBindTexture(GL_TEXTURE_2D, m_AFBOTexture);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+	glGenTextures(1, &m_AFBOAttach1Texture);
+	glBindTexture(GL_TEXTURE_2D, m_AFBOAttach1Texture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glGenTextures(1, &m_AFBOAttach2Texture);
+	glBindTexture(GL_TEXTURE_2D, m_AFBOAttach2Texture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glGenTextures(1, &m_AFBOAttach3Texture);
+	glBindTexture(GL_TEXTURE_2D, m_AFBOAttach3Texture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glGenTextures(1, &m_AFBOAttach4Texture);
+	glBindTexture(GL_TEXTURE_2D, m_AFBOAttach4Texture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
@@ -660,7 +722,7 @@ void Renderer::CreateFBOs() // 텍스쳐 3장 만듬
 	glGenTextures(1, &m_BFBOTexture);
 	glBindTexture(GL_TEXTURE_2D, m_BFBOTexture);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
@@ -684,6 +746,10 @@ void Renderer::CreateFBOs() // 텍스쳐 3장 만듬
 	glGenFramebuffers(1, &m_A_FBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO); // A_FBO 사용
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_AFBOTexture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_AFBOAttach1Texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_AFBOAttach2Texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, m_AFBOAttach3Texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, m_AFBOAttach4Texture, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_DepthRenderBuffer);
 
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -1137,4 +1203,31 @@ void Renderer::CreateParticles(int numParticles)
 
 	delete[] verticesValue;
 
+}
+
+							// Trans
+// 픽셀 단위로 받게 내부적으로 구현
+void Renderer::DrawTexture(float x, float y, float scaleX, float scaleY, GLuint texID)
+{
+	GLuint shader = m_DrawTextureShader;
+	glUseProgram(shader);
+
+	GLuint posLoc = glGetAttribLocation(shader, "a_Position");
+	glEnableVertexAttribArray(posLoc);
+	GLuint texLoc = glGetAttribLocation(shader, "a_TexPos");
+	glEnableVertexAttribArray(texLoc);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_DrawTextureVBO);
+	glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0);
+	glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (GLvoid*)(sizeof(float) * 3));
+
+	GLuint samplerULoc = glGetUniformLocation(shader, "u_TexSampler");
+	glUniform1i(samplerULoc, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texID);
+
+	GLuint posScaleULoc = glGetUniformLocation(shader, "u_PosScale");
+	glUniform4f(posScaleULoc, x, y, scaleX, scaleY);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6); 
 }

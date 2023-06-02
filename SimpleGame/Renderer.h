@@ -79,6 +79,10 @@ private:
 
 	//FBO
 	GLuint m_AFBOTexture = 0;
+	GLuint m_AFBOAttach1Texture = 0;
+	GLuint m_AFBOAttach2Texture = 0;
+	GLuint m_AFBOAttach3Texture = 0;
+	GLuint m_AFBOAttach4Texture = 0;
 	GLuint m_BFBOTexture = 0;
 	GLuint m_CFBOTexture = 0;
 	GLuint m_DepthRenderBuffer = 0;
@@ -92,5 +96,10 @@ private:
 	GLuint m_GridMeshVBO = 0;
 
 	GLuint m_RabbitTexture = 0;
+
+	//DrawTexture
+	void DrawTexture(float x, float y, float scaleX, float scaleY, GLuint texID);
+	GLuint m_DrawTextureVBO = 0;
+	GLuint m_DrawTextureShader = 0;
 };
 

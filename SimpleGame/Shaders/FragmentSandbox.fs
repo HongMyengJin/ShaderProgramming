@@ -1,6 +1,10 @@
 #version 330
 
-layout(location=0) out vec4 FragColor;
+layout(location=0) out vec4 FragColor0;
+layout(location=1) out vec4 FragColor1;
+layout(location=2) out vec4 FragColor2;
+layout(location=3) out vec4 FragColor3;
+layout(location=4) out vec4 FragColor4;
 
 in vec2 v_Texcoord;
 
@@ -18,7 +22,7 @@ void test()
 	float outColorGreyVertical = sin(newValueX);
 	float outColorGreyHorizontal = sin(newValueY);
 	float newColor = max(outColorGreyVertical, outColorGreyHorizontal);
-	FragColor = vec4(newColor);
+	FragColor0 = vec4(newColor);
 }
 
 void circle()
@@ -29,11 +33,11 @@ void circle()
 	float d1 = length(temp1);
 	if(d<0.1 || d1<0.1)
 	{
-		FragColor = vec4(1);
+		FragColor1 = vec4(1);
 	}
 	else
 	{
-		FragColor = vec4(0);
+		FragColor1 = vec4(0);
 	}
 }
 
@@ -43,7 +47,7 @@ void circles()
 	float d = length(temp); 
 	float value = sin(30*d);
 
-	FragColor = vec4(value);
+	FragColor2 = vec4(value);
 }
 
 void radar()
@@ -67,7 +71,7 @@ void radar()
 	
 
 
-	FragColor = vec4(result + 10*value);
+	FragColor3 = vec4(result + 10*value);
 }
 
 void flag()
@@ -89,7 +93,7 @@ void flag()
 		{
 		}
 	}
-	FragColor = vec4(finalColor);
+	FragColor4 = vec4(finalColor);
 }
 
 void realFlag()
@@ -102,26 +106,26 @@ void realFlag()
 	&& 
 	sinValue * v_Texcoord.x - 0.75  < yValue) //* (1 - v_Texcoord.x)
 	{
-		FragColor = vec4(1);
+		FragColor4 = vec4(1);
 		float yWidth = 1.5;
 		float ydistance = yValue - (sinValue * v_Texcoord.x - 0.75);
 		float vX = v_Texcoord.x;
 		float vY = 1.0 - ydistance / yWidth;
-		FragColor = texture(u_Texture, vec2(vX, vY));
+		FragColor4 = texture(u_Texture, vec2(vX, vY));
 		//FragColor = vec4(vX, vY, 0, 1);
 	}
 	else
 	{
-		FragColor = vec4(0);
+		FragColor4 = vec4(0);
 	}
 }
 
 void main()
 {
-	//test();
-	//circle();
-	//circles();
-	//radar();
+	test();
+	circle();
+	circles();
+	radar();
 	//flag();
 	realFlag();
 }
