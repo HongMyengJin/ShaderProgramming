@@ -367,6 +367,21 @@ void Renderer::Class0310_Render()
 
 void Renderer::DrawParticleEffect()
 {
+	glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO); // 
+	GLenum drawBuffers[5]
+		=
+	{
+		GL_COLOR_ATTACHMENT1,
+		GL_COLOR_ATTACHMENT2,
+		GL_COLOR_ATTACHMENT3,
+		GL_COLOR_ATTACHMENT4
+
+	};
+	glDrawBuffers(5, drawBuffers);
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(1, 1, 1, 1);
+	glViewport(0, 0, 512, 512);
 	//Program select
 	int program = m_ParticleShader;
 	glUseProgram(program);
@@ -462,6 +477,12 @@ void Renderer::DrawParticleEffect()
 	glDrawArrays(GL_TRIANGLES, 0, m_ParticleVerticesCount);
 
 	glDisable(GL_BLEND);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//DrawTexture(-0.75 - 0.5f, -0.75, 128, 128, m_AFBOTexture);
+	//DrawTexture(-0.25 - 0.5f, -0.75, 128, 128, m_AFBOAttach1Texture);
+	//DrawTexture(0.25 - 0.5f, -0.75, 128, 128, m_AFBOAttach2Texture);
+	//DrawTexture(0.75 - 0.5f, -0.75, 128, 128, m_AFBOAttach3Texture);
 }
 
 void Renderer::DrawVertexSandbox()
@@ -511,7 +532,7 @@ void Renderer::DrawAlphaClear()
 
 void Renderer::DrawFragmentSandbox()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0); // m_A_FBO에 attach 되어있는 놈에게 렌더링이 되고 있기 때문
+	glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO); // m_A_FBO에 attach 되어있는 놈에게 렌더링이 되고 있기 때문
 	glViewport(0, 0, 512, 512);
 	GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4};
 	glDrawBuffers(5, drawBuffers);
@@ -558,10 +579,11 @@ void Renderer::DrawFragmentSandbox()
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	float offset = 0.5f;
 	DrawTexture(-0.5, 0.5, 256, 256, m_AFBOAttach1Texture);
 	DrawTexture(0.5, -0.5, 256, 256, m_AFBOAttach2Texture);
 	DrawTexture(-0.5, -0.5, 256, 256, m_AFBOAttach3Texture);
-	DrawTexture(0.5, -0.5, 256, 256, m_AFBOAttach4Texture);
+	DrawTexture(0.5, 0.5, 256, 256, m_AFBOAttach4Texture);
 }
 
 
@@ -569,7 +591,7 @@ void Renderer::DrawTextureSandbox()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO);
 
-	glViewport(0, 0, 256, 512);
+	glViewport(0, 0, 512, 512);
 	GLuint shader = m_TextureSandboxShader;
 	glUseProgram(shader);
 	glEnable(GL_BLEND);
@@ -729,7 +751,16 @@ void Renderer::CreateFBOs() // 텍스쳐 3장 만듬
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
 	glGenTextures(1, &m_CFBOTexture);
-	glBindTexture(GL_TEXTURE_2D, m_BFBOTexture);
+	glBindTexture(GL_TEXTURE_2D, m_CFBOTexture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+	glGenTextures(1, &m_DFBOTexture);
+	glBindTexture(GL_TEXTURE_2D, m_DFBOTexture);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -746,13 +777,67 @@ void Renderer::CreateFBOs() // 텍스쳐 3장 만듬
 	glGenFramebuffers(1, &m_A_FBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO); // A_FBO 사용
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_AFBOTexture, 0);
+	//off Screen Buffer 4개를 가짐 -> 총 4개의 off Screen Buffer 출력 가능
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_AFBOAttach1Texture, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_AFBOAttach2Texture, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, m_AFBOAttach3Texture, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, m_AFBOAttach4Texture, 0);
+
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_DepthRenderBuffer);
 
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE)
+	{
+		std::cout << "fbo creation failed" << std::endl;
+	}
+
+	glGenFramebuffers(1, &m_B_FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_B_FBO); // A_FBO 사용
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_AFBOTexture, 0);
+	//off Screen Buffer 4개를 가짐 -> 총 4개의 off Screen Buffer 출력 가능
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_AFBOAttach1Texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_AFBOAttach2Texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, m_AFBOAttach3Texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, m_AFBOAttach4Texture, 0);
+
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_DepthRenderBuffer);
+
+	status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE)
+	{
+		std::cout << "fbo creation failed" << std::endl;
+	}
+
+	glGenFramebuffers(1, &m_C_FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_C_FBO); // A_FBO 사용
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_AFBOTexture, 0);
+	//off Screen Buffer 4개를 가짐 -> 총 4개의 off Screen Buffer 출력 가능
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_AFBOAttach1Texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_AFBOAttach2Texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, m_AFBOAttach3Texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, m_AFBOAttach4Texture, 0);
+
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_DepthRenderBuffer);
+
+	status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE)
+	{
+		std::cout << "fbo creation failed" << std::endl;
+	}
+
+
+	glGenFramebuffers(1, &m_D_FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_D_FBO); // A_FBO 사용
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_AFBOTexture, 0);
+	//off Screen Buffer 4개를 가짐 -> 총 4개의 off Screen Buffer 출력 가능
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_AFBOAttach1Texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_AFBOAttach2Texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, m_AFBOAttach3Texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, m_AFBOAttach4Texture, 0);
+
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_DepthRenderBuffer);
+
+	status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE)
 	{
 		std::cout << "fbo creation failed" << std::endl;

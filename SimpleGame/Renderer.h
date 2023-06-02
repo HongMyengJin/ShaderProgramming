@@ -83,11 +83,16 @@ private:
 	GLuint m_AFBOAttach2Texture = 0;
 	GLuint m_AFBOAttach3Texture = 0;
 	GLuint m_AFBOAttach4Texture = 0;
+
 	GLuint m_BFBOTexture = 0;
 	GLuint m_CFBOTexture = 0;
+	GLuint m_DFBOTexture = 0;
 	GLuint m_DepthRenderBuffer = 0;
 
 	GLuint m_A_FBO = 0;
+	GLuint m_B_FBO = 0;
+	GLuint m_C_FBO = 0;
+	GLuint m_D_FBO = 0;
 
 	GLuint m_ParticleTexture = 0;
 
