@@ -367,6 +367,7 @@ void Renderer::Class0310_Render()
 
 void Renderer::DrawParticleEffect()
 {
+
 	glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO); // 
 	GLenum drawBuffers[5]
 		=
@@ -478,15 +479,22 @@ void Renderer::DrawParticleEffect()
 
 	glDisable(GL_BLEND);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	//DrawTexture(-0.75 - 0.5f, -0.75, 128, 128, m_AFBOTexture);
-	//DrawTexture(-0.25 - 0.5f, -0.75, 128, 128, m_AFBOAttach1Texture);
-	//DrawTexture(0.25 - 0.5f, -0.75, 128, 128, m_AFBOAttach2Texture);
-	//DrawTexture(0.75 - 0.5f, -0.75, 128, 128, m_AFBOAttach3Texture);
+	DrawTexture(-0.75 - 0.5f, -0.75, 128, 128, m_AFBOAttach1Texture);
+	DrawTexture(-0.25 - 0.5f, -0.75, 128, 128, m_AFBOAttach2Texture);
+	DrawTexture(0.25 - 0.5f, -0.75, 128, 128, m_AFBOAttach3Texture);
+	DrawTexture(0.75 - 0.5f, -0.75, 128, 128, m_AFBOAttach4Texture);
 }
 
 void Renderer::DrawVertexSandbox()
 {
+	glBindFramebuffer(GL_FRAMEBUFFER, m_C_FBO); // m_A_FBO에 attach 되어있는 놈에게 렌더링이 되고 있기 때문
+	glViewport(0, 0, 512, 512);
+	GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+	glDrawBuffers(5, drawBuffers);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	GLuint shader = m_VertexSandboxShader;
 	glUseProgram(shader);
 	glEnable(GL_BLEND);
@@ -514,6 +522,8 @@ void Renderer::DrawVertexSandbox()
 
 
 	glDisable(GL_BLEND);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, m_C_FBO); // m_A_FBO에 attach 되어있는 놈에게 렌더링이 되고 있기 때문
 }
 
 void Renderer::DrawAlphaClear()
@@ -532,11 +542,12 @@ void Renderer::DrawAlphaClear()
 
 void Renderer::DrawFragmentSandbox()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO); // m_A_FBO에 attach 되어있는 놈에게 렌더링이 되고 있기 때문
+	glBindFramebuffer(GL_FRAMEBUFFER, m_B_FBO); // m_A_FBO에 attach 되어있는 놈에게 렌더링이 되고 있기 때문
 	glViewport(0, 0, 512, 512);
 	GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4};
 	glDrawBuffers(5, drawBuffers);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	GLuint shader = m_FragmentSandboxShader;
 	glUseProgram(shader);
 	glEnable(GL_BLEND);
@@ -584,14 +595,13 @@ void Renderer::DrawFragmentSandbox()
 	DrawTexture(0.5, -0.5, 256, 256, m_AFBOAttach2Texture);
 	DrawTexture(-0.5, -0.5, 256, 256, m_AFBOAttach3Texture);
 	DrawTexture(0.5, 0.5, 256, 256, m_AFBOAttach4Texture);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, m_B_FBO); // m_A_FBO에 attach 되어있는 놈에게 렌더링이 되고 있기 때문
 }
 
 
 void Renderer::DrawTextureSandbox()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO);
-
-	glViewport(0, 0, 512, 512);
 	GLuint shader = m_TextureSandboxShader;
 	glUseProgram(shader);
 	glEnable(GL_BLEND);
@@ -614,6 +624,12 @@ void Renderer::DrawTextureSandbox()
 
 void Renderer::DrawGridMesh()
 {
+	glBindFramebuffer(GL_FRAMEBUFFER, m_D_FBO); // m_A_FBO에 attach 되어있는 놈에게 렌더링이 되고 있기 때문
+	glViewport(0, 0, 512, 512);
+	GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+	glDrawBuffers(5, drawBuffers);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	GLuint shader = m_GridMeshShader;
 	glUseProgram(shader);
 	glEnable(GL_BLEND);
@@ -636,6 +652,16 @@ void Renderer::DrawGridMesh()
 	glBindTexture(GL_TEXTURE_2D, m_RabbitTexture);
 
 	glDrawArrays(GL_TRIANGLES, 0, m_GridMeshVertexCount);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, m_D_FBO); // m_A_FBO에 attach 되어있는 놈에게 렌더링이 되고 있기 때문
+}
+
+void Renderer::DrawFBOTexture()
+{
+	DrawTexture(-0.75, -0.75, 128, 128, m_AFBOTexture);
+	DrawTexture(-0.25, -0.75, 128, 128, m_BFBOTexture);
+	DrawTexture(0.25, -0.75, 128, 128, m_CFBOTexture);
+	DrawTexture(0.75, -0.75, 128, 128, m_DFBOTexture);
 }
 
 void Renderer::GetGLPosition(float x, float y, float *newX, float *newY)

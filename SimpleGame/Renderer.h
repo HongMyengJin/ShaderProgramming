@@ -22,6 +22,8 @@ public:
 	void DrawVertexSandbox();
 	void DrawTextureSandbox();
 	void DrawGridMesh();
+	void DrawFBOTexture();
+
 
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
